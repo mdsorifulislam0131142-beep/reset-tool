@@ -6,21 +6,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Environment variables or default (Render-এ সেট করুন)
-const ROUTER_HOST = process.env.ROUTER_HOST || 'd15b0d8af4f4.sn.mynetname.net';
-const ROUTER_PORT = parseInt(process.env.ROUTER_PORT || '8728');
-const ROUTER_USER = process.env.ROUTER_USER || '';
-const ROUTER_PASS = process.env.ROUTER_PASS || '';
+// Environment variables (optional, set in Render dashboard)
+const DEFAULT_HOST = process.env.ROUTER_HOST || '';
+const DEFAULT_PORT = parseInt(process.env.ROUTER_PORT || '8728');
+const DEFAULT_USER = process.env.ROUTER_USER || '';
+const DEFAULT_PASS = process.env.ROUTER_PASS || '';
 
 app.post('/api/connect', async (req, res) => {
     const { host, port, username, password } = req.body;
-    const useHost = host || ROUTER_HOST;
-    const usePort = port || ROUTER_PORT;
-    const useUser = username || ROUTER_USER;
-    const usePass = password || ROUTER_PASS;
+    const useHost = host || DEFAULT_HOST;
+    const usePort = port || DEFAULT_PORT;
+    const useUser = username || DEFAULT_USER;
+    const usePass = password || DEFAULT_PASS;
 
     if (!useUser || !usePass) {
         return res.status(400).json({ success: false, message: 'Username and password required' });
+    }
+    if (!useHost) {
+        return res.status(400).json({ success: false, message: 'Host required' });
     }
 
     const client = new RouterOSClient({
@@ -49,10 +52,10 @@ app.post('/api/connect', async (req, res) => {
 app.post('/api/command', async (req, res) => {
     const { host, port, username, password, command, params } = req.body;
     const client = new RouterOSClient({
-        host: host || ROUTER_HOST,
-        port: port || ROUTER_PORT,
-        user: username || ROUTER_USER,
-        password: password || ROUTER_PASS
+        host: host || DEFAULT_HOST,
+        port: port || DEFAULT_PORT,
+        user: username || DEFAULT_USER,
+        password: password || DEFAULT_PASS
     });
     try {
         await client.connect();
@@ -65,4 +68,6 @@ app.post('/api/command', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ API running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ MikroTik Cloud Proxy running on port ${PORT}`);
+});
